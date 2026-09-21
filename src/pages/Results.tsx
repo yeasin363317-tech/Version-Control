@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 import type { Result } from '@/types';
 
 export default function Results() {
@@ -45,14 +46,7 @@ export default function Results() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="page-hero">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          {t('ফলাফল', 'Student Results')}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t('ক্লাস ও রোল নম্বর দিয়ে ফলাফল অনুসন্ধান করুন', 'Search results by class and roll number')}
-        </p>
-      </div>
+      <PageHeader title={t('ফলাফল', 'Student Results')} subtitle={t('ক্লাস ও রোল নম্বর দিয়ে ফলাফল অনুসন্ধান করুন', 'Search results by class and roll number')} />
 
       <div className="section-padding">
         <div className="container-max max-w-2xl">

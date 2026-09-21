@@ -4,6 +4,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useData } from '@/contexts/DataContext';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import PageHeader from '@/components/layout/PageHeader';
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import type { ComplaintStatus, ComplaintType } from '@/types';
@@ -202,14 +203,7 @@ export default function Complaint() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      <div className="page-hero">
-        <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-          {t('অভিযোগ ব্যবস্থাপনা', 'Complaint Management')}
-        </h1>
-        <p className="text-muted-foreground text-sm">
-          {t('অভিযোগ জমা দিন এবং আপনার অভিযোগের অবস্থা জানুন', 'Submit complaints and track their status')}
-        </p>
-      </div>
+      <PageHeader title={t('অভিযোগ ব্যবস্থাপনা', 'Complaint Management')} subtitle={t('অভিযোগ জমা দিন এবং আপনার অভিযোগের অবস্থা জানুন', 'Submit complaints and track their status')} />
 
       <div className="section-padding">
         <div className="container-max max-w-2xl">

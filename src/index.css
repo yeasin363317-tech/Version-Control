@@ -329,3 +329,103 @@
   0% { transform: scale(0); opacity: 0.35; }
   100% { transform: scale(4); opacity: 0; }
 }
+
+/* =============================================
+   PRODUCTION POLISH: MOTION SYSTEM
+   ============================================= */
+.reveal {
+  opacity: 0;
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal-up    { transform: translateY(28px); }
+.reveal-down  { transform: translateY(-28px); }
+.reveal-left  { transform: translateX(-40px); }
+.reveal-right { transform: translateX(40px); }
+.reveal-zoom  { transform: scale(0.94); }
+.reveal-fade  { transform: none; }
+.reveal.reveal-in { opacity: 1; transform: none; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.anim-rise {
+  animation: rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: var(--d, 0ms);
+}
+
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10px); }
+}
+.hero-float { animation: float-y 6s ease-in-out infinite; }
+.hero-float-slow { animation: float-y 8s ease-in-out infinite; animation-delay: 1.2s; }
+
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33%      { transform: translate(24px, -18px) scale(1.08); }
+  66%      { transform: translate(-18px, 14px) scale(0.95); }
+}
+.blob-float { animation: blob-drift 14s ease-in-out infinite; }
+.blob-float-slow { animation: blob-drift 20s ease-in-out infinite reverse; }
+
+@keyframes gradient-shift {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+.text-gradient {
+  background: linear-gradient(90deg, hsl(var(--green-700)), hsl(var(--green-500)), hsl(160 70% 45%), hsl(var(--green-700)));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: gradient-shift 6s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-scroll var(--ticker-duration, 40s) linear infinite;
+}
+.ticker:hover .ticker-track { animation-play-state: paused; }
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+.skeleton {
+  border-radius: 0.75rem;
+  background: linear-gradient(90deg, hsl(var(--muted)) 25%, hsl(var(--secondary)) 37%, hsl(var(--muted)) 63%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+}
+
+/* Shine sweep on the primary CTA */
+.btn-shine::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -60%;
+  width: 40%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: skewX(-20deg);
+  animation: btn-shine 4s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes btn-shine {
+  0%, 60% { left: -60%; }
+  100%    { left: 130%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .anim-rise, .hero-float, .hero-float-slow, .blob-float, .blob-float-slow,
+  .text-gradient, .btn-shine::before, .skeleton { animation: none; }
+  .ticker-track { animation: none; }
+  html { scroll-behavior: auto; }
+}
