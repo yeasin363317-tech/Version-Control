@@ -1,0 +1,36 @@
+name: Unzip
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '*.zip'
+
+permissions:
+  contents: write
+
+jobs:
+  unzip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip
+        run: |
+          ZIP=$(ls -1 *.zip | head -n 1)
+          rm -rf _tmp && mkdir _tmp
+          unzip -q "$ZIP" -d _tmp
+          SRC=_tmp
+          if [ "$(ls -1A _tmp | wc -l)" = "1" ] && [ -d "_tmp/$(ls -1A _tmp)" ]; then
+            SRC="_tmp/$(ls -1A _tmp)"
+          fi
+          rsync -a --exclude='.git' --exclude='.github' "$SRC"/ ./
+          rm -rf _tmp "$ZIP"
+
+      - name: Push
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add -A
+          git commit -m "Unzip project" || echo "Nothing to commit"
+          git push
