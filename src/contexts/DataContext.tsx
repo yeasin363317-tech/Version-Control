@@ -122,9 +122,35 @@ function rowToSettings(r: Record<string, unknown>): WebsiteSettings {
   };
 }
 
+
+/**
+ * Runs a Supabase UPDATE / DELETE and makes sure it actually changed something.
+ * Postgres RLS does NOT return an error when a policy silently matches 0 rows —
+ * it just reports success with an empty result, which is why buttons like
+ * "Publish", "Edit", "Delete" could previously look like they "did nothing".
+ * This turns that silence into a clear, bilingual error instead.
+ */
+async function verified<T = { id: string }>(
+  query: PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+  expectedCount = 1
+): Promise<T[]> {
+  const { data, error } = await query;
+  if (error) throw error;
+  const rows = data || [];
+  if (rows.length < expectedCount) {
+    throw new Error(
+      rows.length === 0
+        ? 'কোনো পরিবর্তন হয়নি। লগইন সেশন শেষ হয়ে থাকতে পারে — আবার লগইন করুন। (Nothing changed — your session may have expired, please log in again)'
+        : `${expectedCount} টির মধ্যে ${rows.length} টি সফল হয়েছে। (Only ${rows.length} of ${expectedCount} succeeded)`
+    );
+  }
+  return rows;
+}
+
 interface DataContextType {
   data: AppData;
   loading: boolean;
+  dataReady: boolean;
   isAdmin: boolean;
   refreshData: () => Promise<void>;
   // Typed updaters for each section
@@ -137,6 +163,8 @@ interface DataContextType {
   saveResult: (result: Result, isEdit: boolean) => Promise<void>;
   deleteResult: (id: string) => Promise<void>;
   toggleResultPublished: (id: string, published: boolean) => Promise<void>;
+  setResultsPublished: (ids: string[], published: boolean) => Promise<void>;
+  deleteResults: (ids: string[]) => Promise<void>;
   saveNotice: (notice: Notice, isEdit: boolean) => Promise<void>;
   deleteNotice: (id: string) => Promise<void>;
   toggleNoticePublished: (id: string, published: boolean) => Promise<void>;
@@ -158,6 +186,7 @@ const DataContext = createContext<DataContextType | null>(null);
 export function DataProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(EMPTY_DATA);
   const [loading, setLoading] = useState(true);
+  const [dataReady, setDataReady] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Check auth session on mount
@@ -215,9 +244,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         termsConditions_en: (pagesRes.data as Record<string, unknown>)?.terms_en as string || '',
         adminCredentials: { email: '', password: '' },
       }));
+      setDataReady(true);
     } catch (err) {
       console.error('Failed to load data:', err);
       setLoading(false);
+      setDataReady(true);
     }
   }, []);
 
@@ -233,8 +264,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       about_bn: teacher.about_bn, about_en: teacher.about_en, photo: teacher.photo,
     };
     if (isEdit) {
-      const { error } = await supabase.from('teachers').update(row).eq('id', teacher.id);
-      if (error) throw error;
+      await verified(supabase.from('teachers').update(row).eq('id', teacher.id).select('id'));
     } else {
       const { error } = await supabase.from('teachers').insert(row);
       if (error) throw error;
@@ -243,8 +273,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteTeacher = useCallback(async (id: string) => {
-    const { error } = await supabase.from('teachers').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('teachers').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
@@ -252,8 +281,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const saveClass = useCallback(async (cls: ClassItem, isEdit: boolean) => {
     const row = { id: cls.id, name_bn: cls.name_bn, name_en: cls.name_en, order: cls.order };
     if (isEdit) {
-      const { error } = await supabase.from('classes').update(row).eq('id', cls.id);
-      if (error) throw error;
+      await verified(supabase.from('classes').update(row).eq('id', cls.id).select('id'));
     } else {
       const { error } = await supabase.from('classes').insert(row);
       if (error) throw error;
@@ -262,8 +290,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteClass = useCallback(async (id: string) => {
-    const { error } = await supabase.from('classes').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('classes').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
@@ -271,8 +298,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const saveSubject = useCallback(async (sub: Subject, isEdit: boolean) => {
     const row = { id: sub.id, name_bn: sub.name_bn, name_en: sub.name_en, class_id: sub.classId || null };
     if (isEdit) {
-      const { error } = await supabase.from('subjects').update(row).eq('id', sub.id);
-      if (error) throw error;
+      await verified(supabase.from('subjects').update(row).eq('id', sub.id).select('id'));
     } else {
       const { error } = await supabase.from('subjects').insert(row);
       if (error) throw error;
@@ -281,8 +307,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteSubject = useCallback(async (id: string) => {
-    const { error } = await supabase.from('subjects').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('subjects').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
@@ -294,8 +319,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       entries: result.entries, published: result.published,
     };
     if (isEdit) {
-      const { error } = await supabase.from('results').update(row).eq('id', result.id);
-      if (error) throw error;
+      await verified(supabase.from('results').update(row).eq('id', result.id).select('id'));
     } else {
       const { error } = await supabase.from('results').insert(row);
       if (error) throw error;
@@ -304,15 +328,48 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteResult = useCallback(async (id: string) => {
-    const { error } = await supabase.from('results').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('results').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
-  const toggleResultPublished = useCallback(async (id: string, published: boolean) => {
-    const { error } = await supabase.from('results').update({ published }).eq('id', id);
-    if (error) throw error;
-    setData(prev => ({ ...prev, results: prev.results.map(r => r.id === id ? { ...r, published } : r) }));
+  // Bulk publish / unpublish. Uses one query per chunk and VERIFIES how many rows were really updated,
+  // because Postgres RLS silently updates 0 rows (no error) when the login session has expired.
+  const setResultsPublished = useCallback(async (ids: string[], published: boolean) => {
+    if (ids.length === 0) return;
+    const done = new Set<string>();
+    for (let i = 0; i < ids.length; i += 80) {
+      const chunk = ids.slice(i, i + 80);
+      const { data: updated, error } = await supabase
+        .from('results').update({ published }).in('id', chunk).select('id');
+      if (error) throw error;
+      (updated || []).forEach(r => done.add(r.id as string));
+    }
+    setData(prev => ({ ...prev, results: prev.results.map(r => done.has(r.id) ? { ...r, published } : r) }));
+    if (done.size !== ids.length) {
+      throw new Error(
+        done.size === 0
+          ? 'কোনো ফলাফল আপডেট হয়নি। লগইন সেশন শেষ হয়ে থাকতে পারে — আবার লগইন করুন। (Nothing updated — please login again)'
+          : `${ids.length} টির মধ্যে মাত্র ${done.size} টি আপডেট হয়েছে। (Only ${done.size} of ${ids.length} updated)`
+      );
+    }
+  }, []);
+
+  const toggleResultPublished = useCallback(
+    (id: string, published: boolean) => setResultsPublished([id], published),
+    [setResultsPublished]
+  );
+
+  const deleteResults = useCallback(async (ids: string[]) => {
+    if (ids.length === 0) return;
+    const removed = new Set<string>();
+    for (let i = 0; i < ids.length; i += 80) {
+      const chunk = ids.slice(i, i + 80);
+      const { data: deleted, error } = await supabase.from('results').delete().in('id', chunk).select('id');
+      if (error) throw error;
+      (deleted || []).forEach(r => removed.add(r.id as string));
+    }
+    setData(prev => ({ ...prev, results: prev.results.filter(r => !removed.has(r.id)) }));
+    if (removed.size !== ids.length) throw new Error(`${ids.length} টির মধ্যে ${removed.size} টি মুছেছে। লগইন সেশন চেক করুন।`);
   }, []);
 
   // Notices
@@ -323,8 +380,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       date: notice.date, attachment: notice.attachment || '', published: notice.published,
     };
     if (isEdit) {
-      const { error } = await supabase.from('notices').update(row).eq('id', notice.id);
-      if (error) throw error;
+      await verified(supabase.from('notices').update(row).eq('id', notice.id).select('id'));
     } else {
       const { error } = await supabase.from('notices').insert(row);
       if (error) throw error;
@@ -333,14 +389,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteNotice = useCallback(async (id: string) => {
-    const { error } = await supabase.from('notices').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('notices').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
   const toggleNoticePublished = useCallback(async (id: string, published: boolean) => {
-    const { error } = await supabase.from('notices').update({ published }).eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('notices').update({ published }).eq('id', id).select('id'));
     setData(prev => ({ ...prev, notices: prev.notices.map(n => n.id === id ? { ...n, published } : n) }));
   }, []);
 
@@ -356,8 +410,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteGalleryItem = useCallback(async (id: string) => {
-    const { error } = await supabase.from('gallery').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('gallery').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
@@ -383,28 +436,24 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, [refreshData]);
 
   const deleteComplaint = useCallback(async (id: string) => {
-    const { error } = await supabase.from('complaints').delete().eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('complaints').delete().eq('id', id).select('id'));
     await refreshData();
   }, [refreshData]);
 
   const toggleComplaintResolved = useCallback(async (id: string, resolved: boolean) => {
     const newStatus = resolved ? 'resolved' : 'pending';
-    const { error } = await supabase.from('complaints').update({ resolved, status: newStatus, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('complaints').update({ resolved, status: newStatus, updated_at: new Date().toISOString() }).eq('id', id).select('id'));
     setData(prev => ({ ...prev, complaints: prev.complaints.map(c => c.id === id ? { ...c, resolved, status: newStatus as ComplaintStatus } : c) }));
   }, []);
 
   const updateComplaintStatus = useCallback(async (id: string, status: ComplaintStatus) => {
     const resolved = status === 'resolved';
-    const { error } = await supabase.from('complaints').update({ status, resolved, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('complaints').update({ status, resolved, updated_at: new Date().toISOString() }).eq('id', id).select('id'));
     setData(prev => ({ ...prev, complaints: prev.complaints.map(c => c.id === id ? { ...c, status, resolved } : c) }));
   }, []);
 
   const updateComplaintReply = useCallback(async (id: string, reply: string) => {
-    const { error } = await supabase.from('complaints').update({ admin_reply: reply, updated_at: new Date().toISOString() }).eq('id', id);
-    if (error) throw error;
+    await verified(supabase.from('complaints').update({ admin_reply: reply, updated_at: new Date().toISOString() }).eq('id', id).select('id'));
     setData(prev => ({ ...prev, complaints: prev.complaints.map(c => c.id === id ? { ...c, adminReply: reply } : c) }));
   }, []);
 
@@ -425,8 +474,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       office_hours_bn: info.officeHours_bn,
       office_hours_en: info.officeHours_en,
     };
-    const { error } = await supabase.from('madrasa_info').upsert({ id: 1, ...row });
-    if (error) throw error;
+    await verified(supabase.from('madrasa_info').upsert({ id: 1, ...row }).select('id'));
     setData(prev => ({ ...prev, madrasaInfo: info }));
   }, []);
 
@@ -439,18 +487,16 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
       footer_text_en: settings.footerText_en, facebook_url: settings.facebookUrl,
       youtube_url: settings.youtubeUrl, primary_color: settings.primaryColor,
     };
-    const { error } = await supabase.from('website_settings').upsert({ id: 1, ...row });
-    if (error) throw error;
+    await verified(supabase.from('website_settings').upsert({ id: 1, ...row }).select('id'));
     setData(prev => ({ ...prev, websiteSettings: settings }));
   }, []);
 
   // Pages Content
   const savePagesContent = useCallback(async (policyBn: string, policyEn: string, termsBn: string, termsEn: string) => {
-    const { error } = await supabase.from('pages_content').upsert({
+    await verified(supabase.from('pages_content').upsert({
       id: 1, privacy_policy_bn: policyBn, privacy_policy_en: policyEn,
       terms_bn: termsBn, terms_en: termsEn,
-    });
-    if (error) throw error;
+    }).select('id'));
     setData(prev => ({ ...prev, privacyPolicy_bn: policyBn, privacyPolicy_en: policyEn, termsConditions_bn: termsBn, termsConditions_en: termsEn }));
   }, []);
 
@@ -458,12 +504,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <DataContext.Provider value={{
-      data, loading, isAdmin,
+      data, loading, dataReady, isAdmin,
       refreshData, setAdminStatus,
       saveTeacher, deleteTeacher,
       saveClass, deleteClass,
       saveSubject, deleteSubject,
-      saveResult, deleteResult, toggleResultPublished,
+      saveResult, deleteResult, toggleResultPublished, setResultsPublished, deleteResults,
       saveNotice, deleteNotice, toggleNoticePublished,
       saveGalleryItem, deleteGalleryItem,
       saveComplaint, deleteComplaint, toggleComplaintResolved,

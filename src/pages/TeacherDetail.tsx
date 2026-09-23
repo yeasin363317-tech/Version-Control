@@ -43,7 +43,7 @@ export default function TeacherDetail() {
             <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-8">
               <div className="w-28 h-28 rounded-full overflow-hidden bg-secondary ring-4 ring-primary/20 shrink-0">
                 {teacher.photo ? (
-                  <img src={teacher.photo} alt={teacher.name_bn} className="w-full h-full object-cover" />
+                  <img src={teacher.photo} alt={teacher.name_bn} className="w-full h-full object-cover object-top" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <User size={48} className="text-muted-foreground" />

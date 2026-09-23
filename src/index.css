@@ -429,3 +429,12 @@
   .ticker-track { animation: none; }
   html { scroll-behavior: auto; }
 }
+
+/* Printing (Result sheet → "Print" / Save as PDF fallback) */
+@media print {
+  .no-print, header, footer { display: none !important; }
+  body { background: #fff !important; }
+  .section-padding { padding: 0 !important; }
+  .container-max { max-width: 100% !important; }
+  .reveal, .anim-rise { opacity: 1 !important; transform: none !important; animation: none !important; }
+}

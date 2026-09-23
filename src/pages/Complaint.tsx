@@ -58,16 +58,11 @@ function MyComplaints() {
     setSearching(true);
     setSearched(false);
     try {
-      // Search by database record ID (exact) OR mobile number (exact)
-      const { data, error } = await supabase
-        .from('complaints')
-        .select('id, tracking_id, name, complaint_type, subject, message, status, admin_reply, created_at, updated_at')
-        .or(`id.eq.${trimmed},mobile.eq.${trimmed}`)
-        .order('created_at', { ascending: false });
-
-      console.log('[Complaint Search] query:', trimmed, '| results:', data?.length ?? 0, '| error:', error);
+      // Complaints are private (RLS blocks direct public SELECT), so this calls a
+      // security-definer database function that returns only the matching row(s).
+      const { data, error } = await supabase.rpc('search_complaint', { search_term: trimmed });
       if (error) throw error;
-      setResults(data as ComplaintRecord[]);
+      setResults((data || []) as ComplaintRecord[]);
     } catch (e: unknown) {
       console.error('[Complaint Search] failed:', e);
       toast.error(e instanceof Error ? e.message : t('অনুসন্ধান ব্যর্থ', 'Search failed'));

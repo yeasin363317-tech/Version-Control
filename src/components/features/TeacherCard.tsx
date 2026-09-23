@@ -27,7 +27,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
               alt={teacher.name_bn}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className="w-full h-full object-cover transition-opacity duration-300"
+              className="w-full h-full object-cover object-top transition-opacity duration-300"
               style={{ opacity: imgLoaded ? 1 : 0 }}
             />
           ) : (
