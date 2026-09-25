@@ -13,13 +13,24 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  const hasPhoto = !!teacher.photo && teacher.photo.trim() !== '';
-  const hasSubtitle = !!(teacher.designation_bn || teacher.designation_en || teacher.qualification_bn || teacher.qualification_en);
+  // Normalize the value before rendering it. A whitespace-only URL should not
+  // create a broken image request, and trimming also avoids invalid URL values.
+  const photoUrl = teacher.photo?.trim() || '';
+  const hasPhoto = photoUrl.length > 0;
+  const hasSubtitle = Boolean(
+    teacher.designation_bn?.trim() ||
+      teacher.designation_en?.trim() ||
+      teacher.qualification_bn?.trim() ||
+      teacher.qualification_en?.trim(),
+  );
+  const teacherName = t(teacher.name_bn, teacher.name_en) || 'Teacher';
 
   useEffect(() => {
     setImgLoaded(false);
     setImgError(false);
-  }, [teacher.photo]);
+  }, [photoUrl]);
+
+  const showPlaceholder = !hasPhoto || imgError;
 
   return (
     <div className="card-base overflow-hidden flex flex-col text-center group h-full min-w-0">
@@ -30,44 +41,49 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
 
       <div className="px-2.5 sm:px-5 pb-4 sm:pb-6 -mt-8 sm:-mt-12 flex flex-col items-center flex-1 min-w-0">
         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-primary/10 ring-4 ring-white shadow-md mb-2 sm:mb-4 transition-transform duration-500 group-hover:scale-105 shrink-0">
-          {hasPhoto && !imgError ? (
+          {showPlaceholder ? (
+            <div className="w-full h-full flex items-center justify-center bg-primary/10" role="img" aria-label={teacherName}>
+              <User size={28} className="text-primary/60 sm:hidden" aria-hidden="true" />
+              <User size={36} className="text-primary/60 hidden sm:block" aria-hidden="true" />
+            </div>
+          ) : (
             <img
-              src={teacher.photo}
-              alt={teacher.name_bn || teacher.name_en || 'Teacher'}
+              key={photoUrl}
+              src={photoUrl}
+              alt={teacherName}
               loading="lazy"
+              decoding="async"
               onLoad={() => setImgLoaded(true)}
-              onError={() => setImgError(true)}
+              onError={() => {
+                setImgLoaded(false);
+                setImgError(true);
+              }}
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover object-top transition-opacity duration-300"
               style={{ opacity: imgLoaded ? 1 : 0 }}
             />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-primary/10">
-              <User size={28} className="text-primary/60 sm:hidden" />
-              <User size={36} className="text-primary/60 hidden sm:block" />
-            </div>
           )}
         </div>
 
         <h3 className="text-[13px] sm:text-base font-bold text-foreground mb-0.5 leading-snug line-clamp-2 break-words w-full px-0.5">
-          {t(teacher.name_bn, teacher.name_en)}
+          {teacherName}
         </h3>
-        {(teacher.designation_bn || teacher.designation_en) && (
+        {(teacher.designation_bn?.trim() || teacher.designation_en?.trim()) && (
           <p className="text-xs sm:text-sm font-semibold text-primary mb-1 line-clamp-1 w-full px-0.5">
             {t(teacher.designation_bn, teacher.designation_en)}
           </p>
         )}
-        {(teacher.qualification_bn || teacher.qualification_en) && (
+        {(teacher.qualification_bn?.trim() || teacher.qualification_en?.trim()) && (
           <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-5 leading-relaxed line-clamp-2 w-full px-0.5">
             {t(teacher.qualification_bn, teacher.qualification_en)}
           </p>
         )}
         <Link
           to={`/teachers/${teacher.id}`}
-          className={`${hasSubtitle ? '' : 'mt-2'} mt-auto flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground transition-colors rounded-full px-3 py-2`}
+          className="mt-auto flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground px-3 py-1.5 rounded-lg transition-colors"
         >
-          <Eye size={13} className="sm:hidden" />
-          <Eye size={15} className="hidden sm:block" />
+          <Eye size={13} className="sm:hidden" aria-hidden="true" />
+          <Eye size={15} className="hidden sm:block" aria-hidden="true" />
           <span className="sm:hidden">দেখুন</span>
           <span className="hidden sm:inline">{t('বিস্তারিত দেখুন', 'View Details')}</span>
         </Link>
