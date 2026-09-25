@@ -419,7 +419,7 @@ export default function Index() {
                 onTint
               />
             </Reveal>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
               {teachers.slice(0, 4).map((teacher, i) => (
                 <Reveal key={teacher.id} delay={i * 90} className="h-full">
                   <TeacherCard teacher={teacher} />

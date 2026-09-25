@@ -31,7 +31,7 @@ export default function Teachers() {
               </p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {teachers.map((teacher, i) => (
                 <Reveal key={teacher.id} delay={Math.min(i, 7) * 80} className="h-full">
                   <TeacherCard teacher={teacher} />

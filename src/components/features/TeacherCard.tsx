@@ -11,16 +11,17 @@ interface TeacherCardProps {
 export default function TeacherCard({ teacher }: TeacherCardProps) {
   const { t } = useLanguage();
   const [imgLoaded, setImgLoaded] = useState(false);
+  const hasSubtitle = !!(teacher.designation_bn || teacher.designation_en || teacher.qualification_bn || teacher.qualification_en);
 
   return (
-    <div className="card-base overflow-hidden flex flex-col text-center group h-full">
-      <div className="h-20 tint tint-green !rounded-none !border-0 group-hover:!transform-none relative overflow-hidden">
+    <div className="card-base overflow-hidden flex flex-col text-center group h-full min-w-0">
+      <div className="h-12 sm:h-20 tint tint-green !rounded-none !border-0 group-hover:!transform-none relative overflow-hidden">
         <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/50" aria-hidden="true" />
         <div className="absolute left-4 -bottom-10 w-24 h-24 rounded-full bg-white/40" aria-hidden="true" />
       </div>
 
-      <div className="px-5 pb-6 -mt-12 flex flex-col items-center flex-1">
-        <div className="w-24 h-24 rounded-full overflow-hidden bg-secondary ring-4 ring-white shadow-md mb-4 transition-transform duration-500 group-hover:scale-105">
+      <div className="px-2.5 sm:px-5 pb-4 sm:pb-6 -mt-8 sm:-mt-12 flex flex-col items-center flex-1 min-w-0">
+        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-primary/10 ring-4 ring-white shadow-md mb-2 sm:mb-4 transition-transform duration-500 group-hover:scale-105 shrink-0">
           {teacher.photo ? (
             <img
               src={teacher.photo}
@@ -31,29 +32,34 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
               style={{ opacity: imgLoaded ? 1 : 0 }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-secondary">
-              <User size={36} className="text-muted-foreground" />
+            <div className="w-full h-full flex items-center justify-center bg-primary/10">
+              <User size={28} className="text-primary/60 sm:hidden" />
+              <User size={36} className="text-primary/60 hidden sm:block" />
             </div>
           )}
         </div>
 
-        <h3 className="text-base font-bold text-foreground mb-0.5">
+        <h3 className="text-[13px] sm:text-base font-bold text-foreground mb-0.5 leading-snug line-clamp-2 break-words w-full px-0.5">
           {t(teacher.name_bn, teacher.name_en)}
         </h3>
         {(teacher.designation_bn || teacher.designation_en) && (
-          <p className="text-sm font-semibold text-primary mb-1">
+          <p className="text-xs sm:text-sm font-semibold text-primary mb-1 line-clamp-1 w-full px-0.5">
             {t(teacher.designation_bn, teacher.designation_en)}
           </p>
         )}
-        <p className="text-sm text-muted-foreground mb-5 leading-relaxed line-clamp-2 min-h-[1.25rem]">
-          {t(teacher.qualification_bn, teacher.qualification_en)}
-        </p>
+        {(teacher.qualification_bn || teacher.qualification_en) && (
+          <p className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-5 leading-relaxed line-clamp-2 w-full px-0.5">
+            {t(teacher.qualification_bn, teacher.qualification_en)}
+          </p>
+        )}
         <Link
           to={`/teachers/${teacher.id}`}
-          className="mt-auto flex items-center gap-2 text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground px-5 py-2 rounded-full border border-primary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+          className={`${hasSubtitle ? '' : 'mt-2'} mt-auto flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground w-full sm:w-auto px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-full border border-primary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap`}
         >
-          <Eye size={15} />
-          {t('বিস্তারিত দেখুন', 'View Details')}
+          <Eye size={13} className="sm:hidden" />
+          <Eye size={15} className="hidden sm:block" />
+          <span className="sm:hidden">দেখুন</span>
+          <span className="hidden sm:inline">{t('বিস্তারিত দেখুন', 'View Details')}</span>
         </Link>
       </div>
     </div>
