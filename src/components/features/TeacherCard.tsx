@@ -13,8 +13,6 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [imgError, setImgError] = useState(false);
 
-  // Normalize the value before rendering it. A whitespace-only URL should not
-  // create a broken image request, and trimming also avoids invalid URL values.
   const photoUrl = teacher.photo?.trim() || '';
   const hasPhoto = photoUrl.length > 0;
   const hasSubtitle = Boolean(
@@ -23,6 +21,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
       teacher.qualification_bn?.trim() ||
       teacher.qualification_en?.trim(),
   );
+
   const teacherName = t(teacher.name_bn, teacher.name_en) || 'Teacher';
 
   useEffect(() => {
@@ -30,7 +29,8 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
     setImgError(false);
   }, [photoUrl]);
 
-  const showPlaceholder = !hasPhoto || imgError;
+  const showPhoto = hasPhoto && !imgError;
+  const showPlaceholder = !hasPhoto || imgError || !imgLoaded;
 
   return (
     <div className="card-base overflow-hidden flex flex-col text-center group h-full min-w-0">
@@ -40,13 +40,8 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
       </div>
 
       <div className="px-2.5 sm:px-5 pb-4 sm:pb-6 -mt-8 sm:-mt-12 flex flex-col items-center flex-1 min-w-0">
-        <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-primary/10 ring-4 ring-white shadow-md mb-2 sm:mb-4 transition-transform duration-500 group-hover:scale-105 shrink-0">
-          {showPlaceholder ? (
-            <div className="w-full h-full flex items-center justify-center bg-primary/10" role="img" aria-label={teacherName}>
-              <User size={28} className="text-primary/60 sm:hidden" aria-hidden="true" />
-              <User size={36} className="text-primary/60 hidden sm:block" aria-hidden="true" />
-            </div>
-          ) : (
+        <div className="relative w-16 h-16 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-primary/10 ring-4 ring-white shadow-md mb-2 sm:mb-4 transition-transform duration-500 group-hover:scale-105 shrink-0">
+          {showPhoto && (
             <img
               key={photoUrl}
               src={photoUrl}
@@ -59,9 +54,17 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
                 setImgError(true);
               }}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover object-top transition-opacity duration-300"
-              style={{ opacity: imgLoaded ? 1 : 0 }}
+              className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-300 ${
+                imgLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
             />
+          )}
+
+          {showPlaceholder && (
+            <div className="absolute inset-0 flex items-center justify-center bg-primary/10" role="img" aria-label={teacherName}>
+              <User size={28} className="text-primary/60 sm:hidden" aria-hidden="true" />
+              <User size={36} className="text-primary/60 hidden sm:block" aria-hidden="true" />
+            </div>
           )}
         </div>
 
@@ -80,7 +83,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
         )}
         <Link
           to={`/teachers/${teacher.id}`}
-          className="mt-auto flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground px-3 py-1.5 rounded-lg transition-colors"
+          className={`${hasSubtitle ? '' : 'mt-2'} mt-auto flex items-center justify-center gap-1 sm:gap-2 text-[11px] sm:text-sm font-semibold text-primary hover:bg-primary hover:text-primary-foreground w-full sm:w-auto px-2.5 sm:px-5 py-1.5 sm:py-2 rounded-full border border-primary transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md whitespace-nowrap`}
         >
           <Eye size={13} className="sm:hidden" aria-hidden="true" />
           <Eye size={15} className="hidden sm:block" aria-hidden="true" />
