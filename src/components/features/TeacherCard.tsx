@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { User, Eye } from 'lucide-react';
-import { useState } from 'react';
 import type { Teacher } from '@/types';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -10,7 +9,6 @@ interface TeacherCardProps {
 
 export default function TeacherCard({ teacher }: TeacherCardProps) {
   const { t } = useLanguage();
-  const [imgLoaded, setImgLoaded] = useState(false);
   const hasSubtitle = !!(teacher.designation_bn || teacher.designation_en || teacher.qualification_bn || teacher.qualification_en);
 
   return (
@@ -27,10 +25,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
             <img
               src={teacher.photo}
               alt={teacher.name_bn}
-              loading="lazy"
-              onLoad={() => setImgLoaded(true)}
-              className="w-full h-full object-contain transition-opacity duration-300"
-              style={{ opacity: imgLoaded ? 1 : 0 }}
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-primary/10">
