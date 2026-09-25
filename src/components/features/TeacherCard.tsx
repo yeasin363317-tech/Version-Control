@@ -16,11 +16,12 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
   return (
     <div className="card-base overflow-hidden flex flex-col text-center group h-full min-w-0">
       <div className="h-12 sm:h-20 tint tint-green !rounded-none !border-0 group-hover:!transform-none relative overflow-hidden">
-        <div className="absolute -right-6 -top-8 w-28 h-28 rounded-full bg-white/50" aria-hidden="true" />
-        <div className="absolute left-4 -bottom-10 w-24 h-24 rounded-full bg-white/40" aria-hidden="true" />
+        <div className="absolute -right-3 -top-4 w-12 h-12 sm:-right-6 sm:-top-8 sm:w-28 sm:h-28 rounded-full bg-white/50" aria-hidden="true" />
+        <div className="absolute left-2 -bottom-4 w-10 h-10 sm:left-4 sm:-bottom-10 sm:w-24 sm:h-24 rounded-full bg-white/40" aria-hidden="true" />
       </div>
 
       <div className="px-2.5 sm:px-5 pb-4 sm:pb-6 -mt-8 sm:-mt-12 flex flex-col items-center flex-1 min-w-0">
+        {/* object-contain (not "cover") so the ENTIRE photo is always visible — nothing gets cropped off */}
         <div className="w-16 h-16 sm:w-24 sm:h-24 rounded-full overflow-hidden bg-primary/10 ring-4 ring-white shadow-md mb-2 sm:mb-4 transition-transform duration-500 group-hover:scale-105 shrink-0">
           {teacher.photo ? (
             <img
@@ -28,7 +29,7 @@ export default function TeacherCard({ teacher }: TeacherCardProps) {
               alt={teacher.name_bn}
               loading="lazy"
               onLoad={() => setImgLoaded(true)}
-              className="w-full h-full object-cover object-top transition-opacity duration-300"
+              className="w-full h-full object-contain transition-opacity duration-300"
               style={{ opacity: imgLoaded ? 1 : 0 }}
             />
           ) : (
